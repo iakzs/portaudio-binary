@@ -16,11 +16,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-
     - name: Install CMake
       run: |
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
@@ -43,11 +38,21 @@ jobs:
         cd portaudio/build/Release
         dir
 
+    - name: Copy Header Files
+      run: |
+        mkdir -p ../include
+        cp -r ../*.h ../include/  # Adjust the path if necessary to copy header files
+
+    - name: Create ZIP of Build Artifacts
+      run: |
+        cd portaudio/build/Release
+        powershell -Command "Compress-Archive -Path *.lib, ../../include/* -DestinationPath ../../portaudio-artifacts.zip"
+
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: portaudio-binaries
-        path: portaudio/build/Release/*
+        name: portaudio-artifacts
+        path: portaudio/build/portaudio-artifacts.zip
 
   release:
     runs-on: ubuntu-latest
@@ -58,13 +63,12 @@ jobs:
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
-        name: portaudio-binaries
+        name: portaudio-artifacts
         path: release-files
 
     - name: Generate Release Tag
       id: tag_generator
       run: |
-        # Generate timestamp-based tag (vYYYYMMDD.HHMMSS)
         TAG="v$(date -u '+%Y%m%d.%H%M%S')"
         echo "Generated tag: $TAG"
         echo "tag=$TAG" >> $GITHUB_OUTPUT
