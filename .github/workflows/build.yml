@@ -1,0 +1,71 @@
+name: Build PortAudio
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.13'
+
+    - name: Install CMake
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+
+    - name: Install Visual Studio Build Tools
+      run: |
+        choco install visualstudio2019buildtools --version=16.11.3 --params "'/NoWeb'"
+
+    - name: Build PortAudio
+      run: |
+        git clone https://github.com/PortAudio/portaudio.git
+        cd portaudio
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+
+    - name: List Build Output
+      run: |
+        cd portaudio/build/Release
+        dir  # List files in the Release directory
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v2
+      with:
+        name: portaudio-binaries
+        path: portaudio/build/Release/*
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: portaudio-binaries
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag: v1.0.0
+        files: |
+          portaudio-binaries/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
