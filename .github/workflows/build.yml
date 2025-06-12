@@ -44,7 +44,7 @@ jobs:
         dir  # List files in the Release directory
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: portaudio-binaries
         path: portaudio/build/Release/*
@@ -57,7 +57,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Download Artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: portaudio-binaries
 
