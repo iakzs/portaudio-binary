@@ -43,6 +43,11 @@ jobs:
         mkdir -p ../include
         cp -r ../*.h ../include/  # Adjust the path if necessary to copy header files
 
+    - name: List Release Directory
+      run: |
+        cd portaudio/build/Release
+        dir
+
     - name: Create ZIP of Build Artifacts
       run: |
         cd portaudio/build/Release
