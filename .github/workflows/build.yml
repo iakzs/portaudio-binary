@@ -1,4 +1,4 @@
-name: Build PortAudio
+name: Build and Release PortAudio
 
 on:
   push:
@@ -14,10 +14,10 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: '3.13'
 
@@ -52,20 +52,30 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
     - name: Download Artifacts
       uses: actions/download-artifact@v4
       with:
         name: portaudio-binaries
+        path: release-files
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+    - name: Generate Release Tag
+      id: tag_generator
+      run: |
+        # Generate timestamp-based tag (vYYYYMMDD.HHMMSS)
+        TAG="v$(date -u '+%Y%m%d.%H%M%S')"
+        echo "Generated tag: $TAG"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
       with:
-        tag: v0.0.1
+        tag_name: ${{ steps.tag_generator.outputs.tag }}
+        name: PortAudio Build ${{ steps.tag_generator.outputs.tag }}
+        body: "Automated build of PortAudio binaries"
         files: |
-          portaudio-binaries/*
+          release-files/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
